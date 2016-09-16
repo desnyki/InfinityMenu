@@ -48,11 +48,10 @@ You can style and place menu title bars as children of the RootScrollView. If yo
         />
 </RelativeLayout>
 
+```
 In your main Activity you will have to get a reference to both the ChildScrollView and RootScrollView as well as the bar views.
 
 ```
-
-
 childScrollView.setBackgroundScrollView(rootScrollView);
 childScrollView.setCloseDistance(50);
 
