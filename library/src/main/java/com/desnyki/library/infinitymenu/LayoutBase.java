@@ -31,9 +31,10 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     private View topView;
     private RootScrollView mScrollView;
     private ViewGroup.LayoutParams layoutParams;
-    private int params = 0;
     private LinearLayout.LayoutParams linearLayoutParams;
     private RelativeLayout.LayoutParams relativeLayoutParams;
+    View bottomView;
+    private int params = 0;
     private int heightRange;
     private int beginBottomMargin;
     private int beginScrollY, endScrollY;
@@ -43,18 +44,11 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     private AnimatorSet animatorSet = new AnimatorSet();
     boolean isAnimating = false;
     boolean fullScreen = false;
-    private DragState dragState = DragState.CANNOTCLOSE;
-    View bottomView;
     int paddingTop;
     int paddingBottom;
     int paddingLeft;
-    int paddingright;
+    int paddingRight;
     DisplayMetrics displayMetrics;
-    public static enum DragState{
-        CANCLOSE(0x0),
-        CANNOTCLOSE(0x1);
-        DragState(int value){}
-    };
 
     private Runnable showRunnable = new Runnable(){
         @Override
@@ -69,9 +63,6 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         public void run() {
             setVisibility(View.INVISIBLE);
             mScrollView.setTouchable(false);
-
-            dragState = DragState.CANNOTCLOSE;
-
             mHeightAnimator.setIntValues(heightRange, beginBottomMargin);
             mScrollYAnimator.setIntValues(mScrollView.getScrollY(), beginScrollY);
             ImageView arrow = (ImageView) topView.findViewWithTag("arrow");
@@ -82,8 +73,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
                 public void run() {
                     ((ViewGroup)topView.getParent()).removeView(bottomView);
                     isAnimating=false;
-                    ((ScrollView)getChildAt(0)).getChildAt(0).setPadding(paddingLeft,paddingTop,paddingright,paddingBottom); //reset padding
-
+                    ((ScrollView)getChildAt(0)).getChildAt(0).setPadding(paddingLeft,paddingTop,paddingRight,paddingBottom); //reset padding
                 }
             },ANIMDURA+10);
         }
@@ -113,7 +103,6 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         mScrollYAnimator.setDuration(ANIMDURA);
         animatorSet.playTogether(mHeightAnimator, mScrollYAnimator);
         animatorSet.setInterpolator(mInterpolator);
-
         mDragableView = createDragableView(context, attrs);
         addDragableView(mDragableView);
     }
@@ -124,6 +113,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
 
         final T refreshableView = getDragableView();
         displayMetrics = getResources().getDisplayMetrics();
+
         if(child == refreshableView){
             super.addView(child, index, params);
             return ;
@@ -133,7 +123,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
             ((ViewGroup)refreshableView).removeAllViews(); // will break if view isn t scrollview
             ((ViewGroup) refreshableView).addView(child, index, params);
         } else {
-            throw new UnsupportedOperationException("Dragable View is not a ViewGroup so can't addView");
+            throw new UnsupportedOperationException("Draggable View is not a ViewGroup");
         }
     }
     public void setBackgroundScrollView(RootScrollView scrollView){
@@ -141,11 +131,12 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         mScrollView.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
+
                 final int action = motionEvent.getAction();
 
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
-                        handldeRootviewTouch();
+                        handleRootviewTouch();
                         break;
                 }
                 return true;
@@ -155,8 +146,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     private boolean mIsBeingDragged = false;
     private float mLastMotionX, mLastMotionY;
     private float mInitialMotionX, mInitialMotionY;
-    private static enum Mode{
-        DISABLED(0x0),
+    private enum Mode{
         PULL_FROM_START(0x1),
         PULL_FROM_END(0x2),
         BOTH(0x3);
@@ -181,8 +171,8 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         if(isAnimating){
             return false;
         }
-        final int action = ev.getAction();
 
+        final int action = ev.getAction();
 
         if(action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP){
             if((ev.getY()<topView.getMeasuredHeight()||ev.getY()>((ScrollView)getChildAt(0)).getChildAt(0).getMeasuredHeight())&!xDrag&!fullScreen)
@@ -195,6 +185,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         if(action != MotionEvent.ACTION_DOWN && mIsBeingDragged){
             return true;
         }
+
         switch (action){
             case MotionEvent.ACTION_DOWN:
                 if (isReadyForPull()) {
@@ -236,6 +227,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         }
         return mIsBeingDragged;
     }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -274,7 +266,6 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     private void pullEvent() {
         final int newScrollValue;
         final float initialMotionValue, lastMotionValue;
-
         initialMotionValue = mInitialMotionY;
         lastMotionValue = mLastMotionY;
 
@@ -337,12 +328,6 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         }
         prevScrollY=mScrollView.getScrollY();
         mScrollView.scrollBy(0, -dy);
-        if(realOffsetY<-closeDistance||realOffsetY>closeDistance){
-            dragState = DragState.CANCLOSE;
-        }else if(dragState == DragState.CANCLOSE && realOffsetY<closeDistance && realOffsetY >-closeDistance){
-            dragState = DragState.CANNOTCLOSE;
-        }
-
         mScrollView.invalidate();
         return realOffsetY;
     }
@@ -467,8 +452,8 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
                     paddingTop = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingTop();
                     paddingBottom = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingBottom();
                     paddingLeft = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingLeft();
-                    paddingright = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingRight();
-                    ((ScrollView)getChildAt(0)).getChildAt(0).setPadding(paddingLeft,paddingTop+topView.getHeight(),paddingright,paddingBottom);
+                    paddingRight = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingRight();
+                    ((ScrollView)getChildAt(0)).getChildAt(0).setPadding(paddingLeft,paddingTop+topView.getHeight(),paddingRight,paddingBottom);
                 }else {
                     ((LayoutParams) getLayoutParams()).topMargin=0;
                     endScrollY = topView.getBottom();
@@ -492,7 +477,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         animate().alpha(0f).setDuration(100);
 
     }
-    public void handldeRootviewTouch(){
+    public void handleRootviewTouch(){
         if(isOpen()) {
             closeWithAnim();
         }
