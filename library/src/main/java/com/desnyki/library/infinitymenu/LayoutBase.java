@@ -56,7 +56,6 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         DragState(int value){}
     };
 
-
     private Runnable showRunnable = new Runnable(){
         @Override
         public void run() {
