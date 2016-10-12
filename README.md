@@ -18,7 +18,7 @@ and:
 dependencies {
     compile 'com.github.desnyki:InfinityMenu:1.0.0'
 }
-
+```
 
 ![Demo][1]
 
