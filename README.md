@@ -1,6 +1,24 @@
 # InfinityMenu
 
+[![](https://jitpack.io/v/desnyki/InfinityMenu.svg)](https://jitpack.io/#desnyki/InfinityMenu)
+
 InfinityMenu is an Android Library implementing an accordion style menu. You can place any view with any size in the menu. To close the menu you can drag to close or tap outside the menu. You can have only one menu open at a time.
+
+Add it to your build.gradle with:
+```gradle
+allprojects {
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+}
+```
+and:
+
+```gradle
+dependencies {
+    compile 'com.github.desnyki:InfinityMenu:1.0.0'
+}
+
 
 ![Demo][1]
 
@@ -10,7 +28,7 @@ You can look at the sample app to see how to use this library in detail.
 
 In your layout create a FrameLayout which will hold the RootScrollView that contains the menu title bars. As well as the ChildScrollView that holds the menu item. It is important to set fillViewport for RootScrollView, and to set ChildScrollView as invisible.
 
-```
+```xml
  <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -33,7 +51,7 @@ In your layout create a FrameLayout which will hold the RootScrollView that cont
 
 You can style and place menu title bars as children of the RootScrollView. If you want to animate the arrow like in the gif, you will need to have an element with tag "arrow" which will then spin 90 degrees based on state.
 
-``` 
+``` xml
 <RelativeLayout android:id="@+id/bar1" android:background="@drawable/bar"
     android:layout_width="match_parent" android:layout_height="64dp" android:orientation="horizontal">           
     <ImageView
@@ -51,7 +69,7 @@ You can style and place menu title bars as children of the RootScrollView. If yo
 ```
 In your main Activity you will have to get a reference to both the ChildScrollView and RootScrollView as well as the bar views.
 
-```
+```java
 childScrollView.setBackgroundScrollView(rootScrollView);
 childScrollView.setCloseDistance(50);
 
