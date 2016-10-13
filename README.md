@@ -84,6 +84,6 @@ RelativeLayout bar1 = (RelativeLayout) findViewById(R.id.bar1);
         });
 ```
 
-.openWithAnim(param 1: title bar object, param 2: is child full screen, param 3: do you want to animate the arrow) is the call that opens your accordion. 
+.openWithAnim(param 1: title bar object, param 2: is child full screen, param 3: do you want to show the title bar if full screen) is the call that opens your accordion. 
 
 [1]: ./art/demo.gif

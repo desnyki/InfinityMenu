@@ -44,17 +44,7 @@
                         android:layout_toEndOf="@+id/imgLeft1"
                         android:paddingStart="24dp"
                         />
-                    <ImageView
-                        android:scaleType="fitCenter"
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_centerVertical="true"
-                        android:src="@drawable/arrow_right"
-                        android:layout_alignParentEnd="true"
-                        android:tag="arrow"
-                        android:layout_marginRight="@dimen/activity_horizontal_margin"
 
-                        />
                 </RelativeLayout>
                 <RelativeLayout android:id="@+id/bar2" android:background="@drawable/bar"
                     android:layout_width="match_parent" android:layout_height="64dp" android:orientation="horizontal"

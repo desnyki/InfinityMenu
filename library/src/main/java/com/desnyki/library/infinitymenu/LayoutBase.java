@@ -66,7 +66,8 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
             mHeightAnimator.setIntValues(heightRange, beginBottomMargin);
             mScrollYAnimator.setIntValues(mScrollView.getScrollY(), beginScrollY);
             ImageView arrow = (ImageView) topView.findViewWithTag("arrow");
-            arrow.animate().rotation(0f);
+            if(arrow!=null)
+                arrow.animate().rotation(0f);
             animatorSet.start();
             postDelayed(new Runnable() {
                 @Override
@@ -398,7 +399,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         closeDistance = dp2px(dp);
     }
 
-    public void openWithAnim(final View topView,final boolean fullScreen, final boolean showTitle) {
+    public void openWithAnim(final View topView, final boolean fullScreen, final boolean showTitle) {
         if(isOpen()) {
             closeWithAnim();
         }
