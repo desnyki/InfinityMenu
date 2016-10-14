@@ -9,9 +9,6 @@ import android.widget.ScrollView;
  * Created by MDeszczynski on 08/07/2016.
  */
 public class ChildScrollView extends LayoutBase<ScrollView> {
-    private final static String TAG= "ChildScrollView";
-
-    private ScrollView mExpandableView;
 
     public ChildScrollView(Context context) {
         this(context, null);
@@ -27,8 +24,7 @@ public class ChildScrollView extends LayoutBase<ScrollView> {
 
     @Override
     protected ScrollView createDragableView(Context context, AttributeSet attrs) {
-        mExpandableView = new ScrollView(context);
-        return mExpandableView;
+        return new ScrollView(context);
     }
 
     @Override
@@ -39,9 +35,7 @@ public class ChildScrollView extends LayoutBase<ScrollView> {
     @Override
     protected boolean isReadyForDragEnd() {
         View scrollViewChild = mDragableView.getChildAt(0);
-        if (null != scrollViewChild) {
-            return mDragableView.getScrollY() >= (scrollViewChild.getHeight() - getHeight());
-        }
-        return false;
+        return null != scrollViewChild && mDragableView.getScrollY()
+                >= (scrollViewChild.getHeight() - getHeight());
     }
 }

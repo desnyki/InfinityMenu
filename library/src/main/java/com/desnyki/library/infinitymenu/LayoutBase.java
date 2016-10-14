@@ -22,18 +22,19 @@ import android.widget.ScrollView;
 /**
  * Created by MDeszczynski on 06/07/2016.
  */
-public abstract class LayoutBase <T extends View> extends FrameLayout{
+public abstract class LayoutBase<T extends View> extends FrameLayout {
 
-    private static final String TAG = "LayoutBase";
-    public final static int LINEARPARAMS = 1;
-    public final static int RELATIVEPARAMS = 2;
+    public final static int LINEAR_PARAMS = 1;
+    public final static int RELATIVE_PARAMS = 2;
+
+    public static final String ARROW = "arrow";
 
     private View topView;
     private RootScrollView mScrollView;
     private ViewGroup.LayoutParams layoutParams;
     private LinearLayout.LayoutParams linearLayoutParams;
     private RelativeLayout.LayoutParams relativeLayoutParams;
-    View bottomView;
+    private View bottomView;
     private int params = 0;
     private int heightRange;
     private int beginBottomMargin;
@@ -44,39 +45,38 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     private AnimatorSet animatorSet = new AnimatorSet();
     boolean isAnimating = false;
     boolean fullScreen = false;
-    int paddingTop;
-    int paddingBottom;
-    int paddingLeft;
-    int paddingRight;
-    DisplayMetrics displayMetrics;
+    private int paddingTop;
+    private int paddingBottom;
+    private int paddingLeft;
+    private int paddingRight;
+    private DisplayMetrics displayMetrics;
 
-    private Runnable showRunnable = new Runnable(){
+    private Runnable showRunnable = new Runnable() {
         @Override
         public void run() {
             animate().alpha(1.0f).setDuration(100);
-            isAnimating=false;
+            isAnimating = false;
         }
     };
 
-    private Runnable hideRunnable = new Runnable(){
+    private Runnable hideRunnable = new Runnable() {
         @Override
         public void run() {
             setVisibility(View.INVISIBLE);
-            mScrollView.setTouchable(false);
             mHeightAnimator.setIntValues(heightRange, beginBottomMargin);
             mScrollYAnimator.setIntValues(mScrollView.getScrollY(), beginScrollY);
-            ImageView arrow = (ImageView) topView.findViewWithTag("arrow");
-            if(arrow!=null)
+            ImageView arrow = (ImageView) topView.findViewWithTag(ARROW);
+            if (arrow != null)
                 arrow.animate().rotation(0f);
             animatorSet.start();
             postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    ((ViewGroup)topView.getParent()).removeView(bottomView);
-                    isAnimating=false;
-                    ((ScrollView)getChildAt(0)).getChildAt(0).setPadding(paddingLeft,paddingTop,paddingRight,paddingBottom); //reset padding
+                    ((ViewGroup) topView.getParent()).removeView(bottomView);
+                    isAnimating = false;
+                    ((ScrollView) getChildAt(0)).getChildAt(0).setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom); //reset padding
                 }
-            },ANIMDURA+10);
+            }, ANIMDURA + 10);
         }
     };
 
@@ -95,9 +95,11 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
 
     public LayoutBase(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             this.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         }
+
         mHeightAnimator = ObjectAnimator.ofInt(this, aHeight, 0, 0);
         mScrollYAnimator = ObjectAnimator.ofInt(this, aScrollY, 0, 0);
         mHeightAnimator.setDuration(ANIMDURA);
@@ -105,29 +107,32 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         animatorSet.playTogether(mHeightAnimator, mScrollYAnimator);
         animatorSet.setInterpolator(mInterpolator);
         mDragableView = createDragableView(context, attrs);
+
         addDragableView(mDragableView);
     }
+
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
-        if(isOpen()|isAnimating)
+        if (isOpen() | isAnimating)
             return;
 
         final T refreshableView = getDragableView();
         displayMetrics = getResources().getDisplayMetrics();
 
-        if(child == refreshableView){
+        if (child == refreshableView) {
             super.addView(child, index, params);
-            return ;
+            return;
         }
 
         if (refreshableView instanceof ViewGroup) {
-            ((ViewGroup)refreshableView).removeAllViews(); // will break if view isn t scrollview
+            ((ViewGroup) refreshableView).removeAllViews(); // will break if view isn t scrollview
             ((ViewGroup) refreshableView).addView(child, index, params);
         } else {
             throw new UnsupportedOperationException("Draggable View is not a ViewGroup");
         }
     }
-    public void setBackgroundScrollView(RootScrollView scrollView){
+
+    public void setBackgroundScrollView(RootScrollView scrollView) {
         mScrollView = scrollView;
         mScrollView.setOnTouchListener(new OnTouchListener() {
             @Override
@@ -137,28 +142,32 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
 
                 switch (action) {
                     case MotionEvent.ACTION_DOWN:
-                        handleRootviewTouch();
-                        break;
+                        handleRootViewTouch();
                 }
                 return true;
             }
         });
     }
+
     private boolean mIsBeingDragged = false;
     private float mLastMotionX, mLastMotionY;
-    private float mInitialMotionX, mInitialMotionY;
-    private enum Mode{
+    private float mInitialMotionY;
+
+    private enum Mode {
         PULL_FROM_START(0x1),
         PULL_FROM_END(0x2),
         BOTH(0x3);
         private int mIntValue;
+
         Mode(int modeInt) {
             mIntValue = modeInt;
         }
+
         static Mode getDefault() {
             return BOTH;
         }
     }
+
     private Mode mMode = Mode.getDefault();
     private Mode mCurrentMode;
     static final float FRICTION = 2.0f;
@@ -167,44 +176,45 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     private boolean shouldRollback;
     private Interpolator mScrollAnimationInterpolator = new DecelerateInterpolator();
     private boolean xDrag = false;
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if(isAnimating){
+        if (isAnimating) {
             return false;
         }
 
         final int action = ev.getAction();
 
-        if(action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP){
-            if((ev.getY()<topView.getMeasuredHeight()||ev.getY()>((ScrollView)getChildAt(0)).getChildAt(0).getMeasuredHeight())&!xDrag&!fullScreen)
+        if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
+            if ((ev.getY() < topView.getMeasuredHeight() || ev.getY() > ((ScrollView) getChildAt(0)).getChildAt(0).getMeasuredHeight()) & !xDrag & !fullScreen)
                 closeWithAnim();
-            xDrag=false;
+            xDrag = false;
             mIsBeingDragged = false;
             return false;
         }
 
-        if(action != MotionEvent.ACTION_DOWN && mIsBeingDragged){
+        if (action != MotionEvent.ACTION_DOWN && mIsBeingDragged) {
             return true;
         }
 
-        switch (action){
+        switch (action) {
             case MotionEvent.ACTION_DOWN:
                 if (isReadyForPull()) {
                     mLastMotionY = mInitialMotionY = ev.getY();
-                    mLastMotionX = mInitialMotionX = ev.getX();
+                    mLastMotionX = ev.getX();
                     mIsBeingDragged = false;
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if(isReadyForPull()){
+                if (isReadyForPull()) {
                     final float y = ev.getY(), x = ev.getX();
                     final float diff, oppositeDiff, absDiff;
 
                     diff = y - mLastMotionY;
                     oppositeDiff = x - mLastMotionX;
                     absDiff = Math.abs(diff);
-                    if(Math.abs(oppositeDiff)>3){
-                        xDrag=true;
+                    if (Math.abs(oppositeDiff) > 3) {
+                        xDrag = true;
                     }
                     if ((absDiff > Math.abs(oppositeDiff))) {
                         if ((diff >= 4f) && isReadyForDragStart()) {
@@ -214,7 +224,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
                             if (mMode == Mode.BOTH) {
                                 mCurrentMode = Mode.PULL_FROM_START;
                             }
-                        }else if ((diff <= -4f) && isReadyForDragEnd()) {
+                        } else if ((diff <= -4f) && isReadyForDragEnd()) {
                             mLastMotionY = y;
                             mLastMotionX = x;
                             mIsBeingDragged = true;
@@ -232,9 +242,9 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        switch(event.getAction()){
+        switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                if(mIsBeingDragged){
+                if (mIsBeingDragged) {
                     mLastMotionY = event.getY();
                     mLastMotionX = event.getX();
                     pullEvent();
@@ -244,14 +254,14 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
             case MotionEvent.ACTION_DOWN: {
                 if (isReadyForPull()) {
                     mLastMotionY = mInitialMotionY = event.getY();
-                    mLastMotionX = mInitialMotionX = event.getX();
+                    mLastMotionX = event.getX();
                     return true;
                 }
                 break;
             }
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP: {
-                xDrag=false;
+                xDrag = false;
                 if (mIsBeingDragged) {
                     mIsBeingDragged = false;
                     smoothScrollTo(0, 200, 0);
@@ -264,13 +274,14 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         }
         return false;
     }
+
     private void pullEvent() {
         final int newScrollValue;
         final float initialMotionValue, lastMotionValue;
         initialMotionValue = mInitialMotionY;
         lastMotionValue = mLastMotionY;
 
-        switch(mCurrentMode){
+        switch (mCurrentMode) {
             case PULL_FROM_END:
                 newScrollValue = Math.round(Math.max(initialMotionValue - lastMotionValue, 0) / FRICTION);
                 break;
@@ -281,16 +292,17 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
         }
         moveContent(newScrollValue);
     }
+
     private void smoothScrollTo(int newScrollValue, long duration, long delayMillis) {
         if (null != mCurrentSmoothScrollRunnable) {
             mCurrentSmoothScrollRunnable.stop();
         }
         final int oldScrollValue;
         oldScrollValue = getScrollY();
-        if(oldScrollValue<-closeDistance||oldScrollValue>closeDistance){
+        if (oldScrollValue < -closeDistance || oldScrollValue > closeDistance) {
             closeWithAnim();
-            delayMillis=100;
-            switch(mCurrentMode){
+            delayMillis = 100;
+            switch (mCurrentMode) {
                 case PULL_FROM_END:
                     shouldRollback = true;
                     break;
@@ -299,7 +311,7 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
                 default:
                     break;
             }
-        }else{
+        } else {
             shouldRollback = true;
         }
 
@@ -312,34 +324,36 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
             }
         }
     }
+
     private int realOffsetY;
     private int prevOffSetY = 0;
     private int dy;
-    int prevScrollY=0;
+    int prevScrollY = 0;
 
-    private int moveContent(int offsetY){
+    private int moveContent(int offsetY) {
 
-        realOffsetY = (int)(offsetY/1.4f);
+        realOffsetY = (int) (offsetY / 1.4f);
         dy = prevOffSetY - realOffsetY;
 
-        if(mScrollView.getScrollY()!=0) {
+        if (mScrollView.getScrollY() != 0) {
             scrollTo(0, realOffsetY);
             prevOffSetY = realOffsetY;
 
         }
-        prevScrollY=mScrollView.getScrollY();
+        prevScrollY = mScrollView.getScrollY();
         mScrollView.scrollBy(0, -dy);
         mScrollView.invalidate();
         return realOffsetY;
     }
-    private boolean isReadyForPull(){
-        switch(mMode){
+
+    private boolean isReadyForPull() {
+        switch (mMode) {
             case PULL_FROM_START:
                 return isReadyForDragStart();
             case PULL_FROM_END:
                 return isReadyForDragEnd();
             case BOTH:
-                return isReadyForDragEnd()||isReadyForDragStart();
+                return isReadyForDragEnd() || isReadyForDragStart();
             default:
                 return false;
         }
@@ -375,167 +389,196 @@ public abstract class LayoutBase <T extends View> extends FrameLayout{
                 final int deltaY = Math.round((mScrollFromY - mScrollToY)
                         * mInterpolator.getInterpolation(normalizedTime / 1000f));
                 mCurrentY = mScrollFromY - deltaY;
-                if(PrevY == 0){ /*the PrevY will be 0 at first time */
+
+                if (PrevY == 0) { /*the PrevY will be 0 at first time */
                     PrevY = mScrollFromY;
                 }
+
                 offsetY = PrevY - mCurrentY;
                 PrevY = mCurrentY;
+
                 scrollTo(0, mCurrentY);
-                if(shouldRollback) {
+
+                if (shouldRollback) {
                     mScrollView.scrollBy(0, -offsetY);
                 }
             }
+
             if (mContinueRunning && mScrollToY != mCurrentY) {
                 LayoutBase.this.postDelayed(this, 17);
             }
         }
+
         public void stop() {
             mContinueRunning = false;
             removeCallbacks(this);
         }
     }
 
-    public void setCloseDistance(int dp){
+    public void setCloseDistance(int dp) {
         closeDistance = dp2px(dp);
     }
 
     public void openWithAnim(final View topView, final boolean fullScreen, final boolean showTitle) {
-        if(isOpen()) {
+        this.topView = topView;
+        this.fullScreen = fullScreen;
+
+        if (isOpen()) {
             closeWithAnim();
         }
-        if(isAnimating)
+
+        if (isAnimating)
             return;
-        isAnimating=true;
-        this.topView = topView;
-        mScrollView.setTouchable(false);
-        this.fullScreen=fullScreen;
+
+        isAnimating = true;
 
         bottomView = new View(getContext());
 
         layoutParams = topView.getLayoutParams();
-        if(layoutParams instanceof LinearLayout.LayoutParams){
-            LinearLayout.LayoutParams myParams =  new LinearLayout.LayoutParams(0,0);
-            myParams.setMargins(0,displayMetrics.heightPixels,0,0);
+
+        if (layoutParams instanceof LinearLayout.LayoutParams) {
+            LinearLayout.LayoutParams myParams = new LinearLayout.LayoutParams(0, 0);
+            myParams.setMargins(0, displayMetrics.heightPixels, 0, 0);
             bottomView.setLayoutParams(myParams);
-            params = LINEARPARAMS;
-            linearLayoutParams = (LinearLayout.LayoutParams)layoutParams;
+            params = LINEAR_PARAMS;
+            linearLayoutParams = (LinearLayout.LayoutParams) layoutParams;
             beginBottomMargin = linearLayoutParams.bottomMargin;
-            ((LinearLayout)topView.getParent()).addView(bottomView);
-        }else if(layoutParams instanceof RelativeLayout.LayoutParams){
-            RelativeLayout.LayoutParams myParams =  new RelativeLayout.LayoutParams(0,0);
-            myParams.setMargins(0,displayMetrics.heightPixels*2,0,0);
+            ((LinearLayout) topView.getParent()).addView(bottomView);
+        } else if (layoutParams instanceof RelativeLayout.LayoutParams) {
+            RelativeLayout.LayoutParams myParams = new RelativeLayout.LayoutParams(0, 0);
+            myParams.setMargins(0, displayMetrics.heightPixels * 2, 0, 0);
             bottomView.setLayoutParams(myParams);
-            params = RELATIVEPARAMS;
-            relativeLayoutParams = (RelativeLayout.LayoutParams)layoutParams;
+            params = RELATIVE_PARAMS;
+            relativeLayoutParams = (RelativeLayout.LayoutParams) layoutParams;
             beginBottomMargin = relativeLayoutParams.bottomMargin;
-            ((RelativeLayout)topView.getParent()).addView(bottomView);
-        }else{
+            ((RelativeLayout) topView.getParent()).addView(bottomView);
+        } else {
             Log.e("error", "topView's parent should be linearlayout or relativelayout");
-            return ;
+            return;
         }
 
-        if(animatorSet.isRunning()){
+        if (animatorSet.isRunning()) {
             animatorSet.cancel();
         }
-        post(new Runnable(){
+
+        post(new Runnable() {
             @Override
             public void run() {
                 setVisibility(View.VISIBLE);
                 setAlpha(0.0f);
-                if(fullScreen){
+
+                if (fullScreen) {
                     heightRange = mScrollView.getHeight();
-                    beginBottomMargin=0;
-                }else {
-                    heightRange = ((ScrollView)getChildAt(0)).getChildAt(0).getMeasuredHeight();
+                    beginBottomMargin = 0;
+                } else {
+                    heightRange = ((ScrollView) getChildAt(0)).getChildAt(0).getMeasuredHeight();
                 }
-                if(showTitle){
+
+                if (showTitle) {
                     endScrollY = topView.getTop();
-                    paddingTop = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingTop();
-                    paddingBottom = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingBottom();
-                    paddingLeft = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingLeft();
-                    paddingRight = ((ScrollView)getChildAt(0)).getChildAt(0).getPaddingRight();
-                    ((ScrollView)getChildAt(0)).getChildAt(0).setPadding(paddingLeft,paddingTop+topView.getHeight(),paddingRight,paddingBottom);
-                }else {
-                    ((LayoutParams) getLayoutParams()).topMargin=0;
+                    paddingTop = ((ScrollView) getChildAt(0)).getChildAt(0).getPaddingTop();
+                    paddingBottom = ((ScrollView) getChildAt(0)).getChildAt(0).getPaddingBottom();
+                    paddingLeft = ((ScrollView) getChildAt(0)).getChildAt(0).getPaddingLeft();
+                    paddingRight = ((ScrollView) getChildAt(0)).getChildAt(0).getPaddingRight();
+                    ((ScrollView) getChildAt(0)).getChildAt(0).setPadding(paddingLeft, paddingTop + topView.getHeight(), paddingRight, paddingBottom);
+                } else {
+                    ((LayoutParams) getLayoutParams()).topMargin = 0;
                     endScrollY = topView.getBottom();
                 }
+
                 mHeightAnimator.setIntValues(beginBottomMargin, heightRange);
                 beginScrollY = mScrollView.getScrollY();
                 mScrollYAnimator.setIntValues(beginScrollY, endScrollY);
                 animatorSet.start();
+
                 postDelayed(showRunnable, ANIMDURA);
             }
         });
     }
-    public void closeWithAnim(){
-        if(!isOpen())
+
+    public void closeWithAnim() {
+        if (!isOpen())
             return;
-        isAnimating=true;
-        if(animatorSet.isRunning()){
+
+        isAnimating = true;
+
+        if (animatorSet.isRunning()) {
             animatorSet.cancel();
         }
-        postDelayed(hideRunnable, 100);
-        animate().alpha(0f).setDuration(100);
 
+        postDelayed(hideRunnable, 100);
+
+        animate().alpha(0f).setDuration(100);
     }
-    public void handleRootviewTouch(){
-        if(isOpen()) {
+
+    private void handleRootViewTouch() {
+        if (isOpen()) {
             closeWithAnim();
         }
     }
-    Property<LayoutBase, Integer> aHeight = new Property<LayoutBase, Integer>(Integer.class, "mHeight") {
+
+    private Property<LayoutBase, Integer> aHeight = new Property<LayoutBase, Integer>(Integer.class, "mHeight") {
         @Override
         public Integer get(LayoutBase object) {
             return object.mHeight;
         }
+
         @Override
         public void set(LayoutBase object, Integer value) {
             object.mHeight = value;
             heightChangeAnim();
         }
     };
-    Property<LayoutBase, Integer> aScrollY = new Property<LayoutBase, Integer>(Integer.class, "iScrollY"){
+    private Property<LayoutBase, Integer> aScrollY = new Property<LayoutBase, Integer>(Integer.class, "iScrollY") {
         @Override
         public Integer get(LayoutBase object) {
             return object.iScrollY;
         }
+
         @Override
         public void set(LayoutBase object, Integer value) {
             object.iScrollY = value;
             scrollYChangeAnim();
         }
     };
-    private void heightChangeAnim(){
-        switch (params){
-            case LINEARPARAMS:
+
+    private void heightChangeAnim() {
+        switch (params) {
+            case LINEAR_PARAMS:
                 linearLayoutParams.bottomMargin = mHeight;
                 break;
-            case RELATIVEPARAMS:
+            case RELATIVE_PARAMS:
                 relativeLayoutParams.bottomMargin = mHeight;
-                break;
         }
-        if(topView!=null)
+
+        if (topView != null)
             topView.setLayoutParams(layoutParams);
     }
-    private void scrollYChangeAnim(){
+
+    private void scrollYChangeAnim() {
         mScrollView.scrollTo(0, iScrollY);
         mScrollView.invalidate();
     }
+
     public final T getDragableView() {
         return mDragableView;
     }
 
     protected abstract T createDragableView(Context context, AttributeSet attrs);
+
     protected abstract boolean isReadyForDragStart();
+
     protected abstract boolean isReadyForDragEnd();
 
     private void addDragableView(T DragableView) {
-        addView(DragableView,ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        addView(DragableView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
     }
-    private int dp2px(float dp){
+
+    private int dp2px(float dp) {
         return (int) (dp * getContext().getResources().getDisplayMetrics().density + 0.5f);
     }
-    public boolean isOpen(){
-        return getVisibility()==View.VISIBLE;
+
+    public boolean isOpen() {
+        return getVisibility() == View.VISIBLE;
     }
 }
