@@ -55,6 +55,7 @@ public abstract class LayoutBase<T extends View> extends FrameLayout {
         @Override
         public void run() {
             animate().alpha(1.0f).setDuration(100);
+
             isAnimating = false;
         }
     };
@@ -186,8 +187,9 @@ public abstract class LayoutBase<T extends View> extends FrameLayout {
         final int action = ev.getAction();
 
         if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
-            if ((ev.getY() < topView.getMeasuredHeight() || ev.getY() > ((ScrollView) getChildAt(0)).getChildAt(0).getMeasuredHeight()) & !xDrag & !fullScreen)
+            if ((ev.getY() < topView.getMeasuredHeight() || ev.getY() > ((ScrollView) getChildAt(0)).getChildAt(0).getMeasuredHeight()) & !xDrag & !fullScreen) {
                 closeWithAnim();
+            }
             xDrag = false;
             mIsBeingDragged = false;
             return false;
@@ -420,8 +422,6 @@ public abstract class LayoutBase<T extends View> extends FrameLayout {
     }
 
     public void openWithAnim(final View topView, final boolean fullScreen, final boolean showTitle) {
-        this.topView = topView;
-        this.fullScreen = fullScreen;
 
         if (isOpen()) {
             closeWithAnim();
@@ -429,6 +429,9 @@ public abstract class LayoutBase<T extends View> extends FrameLayout {
 
         if (isAnimating)
             return;
+
+        this.topView = topView;
+        this.fullScreen = fullScreen;
 
         isAnimating = true;
 
@@ -490,7 +493,9 @@ public abstract class LayoutBase<T extends View> extends FrameLayout {
                 beginScrollY = mScrollView.getScrollY();
                 mScrollYAnimator.setIntValues(beginScrollY, endScrollY);
                 animatorSet.start();
-
+                ImageView arrow = (ImageView) topView.findViewWithTag(ARROW);
+                if (arrow != null)
+                    arrow.animate().rotation(90f);
                 postDelayed(showRunnable, ANIMDURA);
             }
         });
@@ -580,5 +585,9 @@ public abstract class LayoutBase<T extends View> extends FrameLayout {
 
     public boolean isOpen() {
         return getVisibility() == View.VISIBLE;
+    }
+
+    public boolean isAnimating(){
+        return isAnimating;
     }
 }
