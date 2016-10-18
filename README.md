@@ -2,6 +2,7 @@
 
 [![GitHub license](https://img.shields.io/github/license/dcendents/android-maven-gradle-plugin.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 [![](https://jitpack.io/v/desnyki/InfinityMenu.svg)](https://jitpack.io/#desnyki/InfinityMenu)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Infinity%20Menu-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4510)
 
 InfinityMenu is an Android Library implementing an accordion style menu. You can place any view with any size in the menu. To close the menu you can drag to close or tap outside the menu. You can have only one menu open at a time.
 
@@ -17,11 +18,14 @@ and:
 
 ```gradle
 dependencies {
-    compile 'com.github.desnyki:InfinityMenu:1.0.0'
+    compile 'com.github.desnyki:InfinityMenu:1.0.3'
 }
 ```
 
 ![Demo][1]
+
+<a href="https://play.google.com/store/apps/details?id=com.desnyki.infinitymenu"><img alt="Android app on Google Play" src="https://developer.android.com/images/brand/en_app_rgb_wo_45.png" />
+</a>
 
 How to use:
 
@@ -33,20 +37,20 @@ In your layout create a FrameLayout which will hold the RootScrollView that cont
  <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <infinitymenu.RootScrollView
+    <com.desnyki.library.infinitymenu.RootScrollView
         android:id="@+id/menu_scroll_view"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:fillViewport="true"
         >
-	</infinitymenu.RootScrollView>
-	<infinitymenu.ChildScrollView
+	</com.desnyki.library.infinitymenu.RootScrollView>
+	<com.desnyki.library.infinitymenu.ChildScrollView
         android:id="@+id/child_scroll_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
         >
-    </infinitymenu.ChildScrollView>
+    </com.desnyki.library.infinitymenu.ChildScrollView>
     </FrameLayout>
 ```
 
