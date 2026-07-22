@@ -13,7 +13,6 @@ public class RootScrollView extends ScrollView {
     private final static String TAG = "RootScrollView";
     private boolean mTouchable = true;
 
-
     public RootScrollView(Context context) {
         this(context,null);
     }
